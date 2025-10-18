@@ -151,12 +151,6 @@ def init_db():
                 )
             ''')
             
-            # Create admin user
-            # hashed_password = generate_password_hash('admin123')
-            # cursor.execute(
-            #     "INSERT INTO users (username, email, password, role) VALUES (%s, %s, %s, %s)",
-            #     ('admin', 'admin@bookstore.com', hashed_password, 'admin')
-            # )
             
             # Add sample books
             # sample_books = [
