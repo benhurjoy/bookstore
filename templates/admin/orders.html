@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Orders - BookStore{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Manage Orders</h1>
+    <div class="d-flex align-items-center">
+        <span class="badge bg-primary me-2">{{ orders|length }} orders</span>
+    </div>
+</div>
+
+{% if orders %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Amount</th>
+                        <th>Delivery Address</th>
+                        <th>Status</th>
+                        <th>Order Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>
+                            <strong>{{ order.order_id }}</strong>
+                            {% if order.tracking_number %}
+                            <br><small class="text-muted">Track: {{ order.tracking_number }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ order.username }}</td>
+                        <td>{{ order.item_count }} item(s)</td>
+                        <td>${{ "%.2f"|format(order.amount or 0) }}</td>
+                        <td>
+                            {% if order.full_name %}
+                            <small>
+                                {{ order.city }}, {{ order.state }}<br>
+                                <span class="text-muted">{{ order.full_name }}</span>
+                            </small>
+                            {% else %}
+                            <span class="text-muted">No address</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% set status = order.delivery_status|lower %}
+                            <span class="badge 
+                                {% if status == 'delivered' %}bg-success
+                                {% elif status == 'cancelled' %}bg-danger
+                                {% elif status == 'confirmed' %}bg-primary
+                                {% elif status == 'processing' %}bg-info
+                                {% elif status == 'shipped' %}bg-warning
+                                {% elif status == 'out_for_delivery' %}bg-warning text-dark
+                                {% else %}bg-secondary{% endif %}">
+                                {{ status|replace('_', ' ')|title }}
+                            </span>
+                        </td>
+                        <td>{{ order.created_at.strftime('%Y-%m-%d') if order.created_at else 'N/A' }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        data-bs-toggle="modal" data-bs-target="#updateStatusModal{{ order.order_id }}">
+                                    Update Status
+                                </button>
+                                <!-- <a href="#" class="btn btn-sm btn-outline-info">View Details</a> -->
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- All Modals (moved outside the table to prevent flicker) -->
+{% for order in orders %}
+<div class="modal fade" id="updateStatusModal{{ order.order_id }}" tabindex="-1" 
+     aria-labelledby="updateStatusModalLabel{{ order.order_id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateStatusModalLabel{{ order.order_id }}">
+                    Update Order Status - {{ order.order_id }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('update_order_status', order_id=order.order_id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="status{{ order.order_id }}" class="form-label">Status</label>
+                        <select class="form-control" id="status{{ order.order_id }}" name="status" required>
+                            <option value="confirmed" {% if order.delivery_status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                            <option value="processing" {% if order.delivery_status == 'processing' %}selected{% endif %}>Processing</option>
+                            <option value="shipped" {% if order.delivery_status == 'shipped' %}selected{% endif %}>Shipped</option>
+                            <option value="out_for_delivery" {% if order.delivery_status == 'out_for_delivery' %}selected{% endif %}>Out for Delivery</option>
+                            <option value="delivered" {% if order.delivery_status == 'delivered' %}selected{% endif %}>Delivered</option>
+                            <option value="cancelled" {% if order.delivery_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description{{ order.order_id }}" class="form-label">Description</label>
+                        <textarea class="form-control" id="description{{ order.order_id }}" name="description" 
+                                  placeholder="Optional status description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="location{{ order.order_id }}" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location{{ order.order_id }}" name="location" 
+                               placeholder="Current location (optional)">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% else %}
+<div class="text-center py-5">
+    <div class="display-1 text-muted mb-3">
+        <i class="fas fa-shopping-bag"></i>
+    </div>
+    <h4 class="text-muted">No orders yet</h4>
+    <p class="text-muted mb-4">When customers place orders, they will appear here.</p>
+</div>
+{% endif %}
+
+<!-- Order Statistics -->
+<div class="row mt-5">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Orders</h5>
+                <h2 class="card-text">{{ orders|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Delivered</h5>
+                <h2 class="card-text">{{ orders|selectattr('delivery_status', 'equalto', 'delivered')|list|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">In Transit</h5>
+                <h2 class="card-text">{{ orders|selectattr('delivery_status', 'in', ['shipped', 'out_for_delivery'])|list|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Processing</h5>
+                <h2 class="card-text">{{ orders|selectattr('delivery_status', 'in', ['confirmed', 'processing'])|list|length }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

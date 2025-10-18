@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - BookStore{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Checkout</h1>
+    <a href="{{ url_for('cart') }}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left"></i> Back to Cart
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Select Delivery Address</h4>
+            </div>
+            <div class="card-body">
+                {% if addresses %}
+                <form method="POST" action="{{ url_for('checkout') }}">
+                    {% for address in addresses %}
+                    <div class="form-check mb-3 p-3 border rounded">
+                        <input class="form-check-input" type="radio" name="address_id" 
+                               value="{{ address.id }}" id="address{{ address.id }}" 
+                               {% if address.is_default %}checked{% endif %} required>
+                        <label class="form-check-label w-100" for="address{{ address.id }}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong class="h6">{{ address.full_name }}</strong>
+                                    {% if address.is_default %}
+                                    <span class="badge bg-primary ms-2">Default</span>
+                                    {% endif %}
+                                </div>
+                                <div class="text-muted small">
+                                    {{ address.phone }}
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <p class="mb-1">{{ address.address_line1 }}</p>
+                                {% if address.address_line2 %}
+                                <p class="mb-1">{{ address.address_line2 }}</p>
+                                {% endif %}
+                                <p class="mb-1">{{ address.city }}, {{ address.state }} - {{ address.postal_code }}</p>
+                                <p class="mb-0 text-muted">{{ address.country }}</p>
+                            </div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-credit-card"></i> Proceed to Payment - ${{ "%.2f"|format(cart_total) }}
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <div class="text-center py-4">
+                    <div class="text-muted mb-3">
+                        <i class="fas fa-map-marker-alt fa-3x"></i>
+                    </div>
+                    <h5>No addresses found</h5>
+                    <p class="text-muted">Please add a delivery address to continue with your order.</p>
+                    <a href="{{ url_for('add_address') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Address
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Order Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Items Total:</span>
+                    <span>${{ "%.2f"|format(cart_total) }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Shipping:</span>
+                    <span class="text-success">FREE</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tax:</span>
+                    <span>$0.00</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-3">
+                    <strong>Total Amount:</strong>
+                    <strong class="h5 text-primary">${{ "%.2f"|format(cart_total) }}</strong>
+                </div>
+                
+                <div class="alert alert-info">
+                    <small>
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Delivery Information:</strong><br>
+                        • Estimated delivery: 5-7 business days<br>
+                        • Free shipping on all orders<br>
+                        • Secure payment processing
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support Information -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Need Help?</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('user_addresses') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-plus"></i> Manage Addresses
+                    </a>
+                    <a href="{{ url_for('user_books') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-shopping-bag"></i> Continue Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Security Badges -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="text-center">
+            <small class="text-muted">
+                <i class="fas fa-lock text-success"></i> Secure Checkout • 
+                <i class="fas fa-shield-alt text-primary"></i> SSL Encrypted • 
+                <i class="fas fa-credit-card text-info"></i> Multiple Payment Options
+            </small>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.form-check-label:hover {
+    cursor: pointer;
+}
+
+.border.rounded {
+    transition: all 0.3s ease;
+}
+
+.border.rounded:hover {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.1);
+}
+
+.card {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 10px;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+    border: none;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    padding: 12px;
+    font-weight: 600;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #218838 0%, #1e9e8a 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Order Confirmation - BookStore{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="card-title mb-0 text-center">
+                        <i class="fas fa-check-circle"></i> Order Confirmed!
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle text-success display-1"></i>
+                    </div>
+                    
+                    <h3>Thank You for Your Purchase!</h3>
+                    <p class="lead">Your order has been successfully placed and will be delivered soon.</p>
+                    
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5>Order & Delivery Details</h5>
+                            <p><strong>Order ID:</strong> {{ order_id }}</p>
+                            <p><strong>Tracking Number:</strong> {{ order_items[0].tracking_number if order_items and order_items[0].tracking_number else 'Generating...' }}</p>
+                            <p><strong>Order Total:</strong> ${{ "%.2f"|format(order_total) }}</p>
+                            <p><strong>Estimated Delivery:</strong> {{ (order_items[0].estimated_delivery.strftime('%B %d, %Y') if order_items and order_items[0].estimated_delivery else 'Calculating...') }}</p>
+                            <p><strong>Status:</strong> <span class="badge bg-success">Confirmed</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5>Items Ordered</h5>
+                            {% for item in order_items %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ item.image_url }}" alt="{{ item.title }}" style="width: 40px; height: 60px; object-fit: cover;" class="me-3">
+                                    <div>
+                                        <h6 class="mb-0">{{ item.title }}</h6>
+                                        <small class="text-muted">by {{ item.author }}</small>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="text-muted">Qty: {{ item.quantity }}</span>
+                                    <br>
+                                    <strong>${{ "%.2f"|format(item.price) }}</strong>
+                                </div>
+                            </div>
+                            {% if not loop.last %}<hr>{% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{{ url_for('track_order', order_id=order_id) }}" class="btn btn-primary me-md-2">
+                            <i class="fas fa-shipping-fast"></i> Track Your Order
+                        </a>
+                        <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline-primary me-md-2">
+                            <i class="fas fa-home"></i> Back to Dashboard
+                        </a>
+                        <a href="{{ url_for('order_history') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-history"></i> View Order History
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

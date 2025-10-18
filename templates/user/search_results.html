@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - BookStore{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>Search Results</h1>
+        <p class="text-muted">
+            {% if result_count == 0 %}
+                No books found for "{{ query }}"
+            {% else %}
+                Found {{ result_count }} book{% if result_count != 1 %}s{% endif %} for "{{ query }}"
+            {% endif %}
+        </p>
+    </div>
+    <a href="{{ url_for('user_books') }}" class="btn btn-outline-primary">View All Books</a>
+</div>
+
+{% if result_count > 0 %}
+<div class="row">
+    {% for book in books %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="position-relative">
+                <img src="{{ book.image_url }}" class="card-img-top" alt="{{ book.title }}" style="height: 300px; object-fit: cover;">
+                {% if book.stock == 0 %}
+                <div class="position-absolute top-0 start-0 bg-danger text-white p-2">
+                    Out of Stock
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title">{{ book.title }}</h5>
+                <p class="card-text text-muted">by {{ book.author }}</p>
+                <p class="card-text">
+                    {% if book.description %}
+                        {{ book.description[:150] }}{% if book.description|length > 150 %}...{% endif %}
+                    {% else %}
+                        <span class="text-muted">No description available</span>
+                    {% endif %}
+                </p>
+                <div class="mt-auto">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <strong class="text-primary h5">${{ "%.2f"|format(book.price) }}</strong>
+                        <span class="badge {% if book.stock > 10 %}bg-success{% elif book.stock > 0 %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ book.stock }} left
+                        </span>
+                    </div>
+                    {% if book.stock > 0 %}
+                        <a href="{{ url_for('add_to_cart', book_id=book.id) }}" class="btn btn-primary w-100">
+                            <i class="fas fa-cart-plus"></i> Add to Cart
+                        </a>
+                    {% else %}
+                        <button class="btn btn-secondary w-100" disabled>
+                            <i class="fas fa-times"></i> Out of Stock
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <div class="display-1 text-muted mb-3">
+        <i class="fas fa-search"></i>
+    </div>
+    <h4 class="text-muted">No books found for "{{ query }}"</h4>
+    <p class="text-muted mb-4">Try searching with different keywords or browse all books.</p>
+    <div class="d-flex justify-content-center gap-2">
+        <a href="{{ url_for('user_books') }}" class="btn btn-primary">Browse All Books</a>
+        <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline-primary">Back to Dashboard</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Search Suggestions -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Search Tips</h5>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-lightbulb text-warning me-2"></i>Try searching by book title, author name, or keywords from the description</li>
+                    <li><i class="fas fa-lightbulb text-warning me-2"></i>Use specific terms for better results</li>
+                    <li><i class="fas fa-lightbulb text-warning me-2"></i>Check your spelling if you're not getting results</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Track Order - BookStore{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-shipping-fast"></i> Order Tracking
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Order Information</h6>
+                        <p class="mb-1"><strong>Order ID:</strong> {{ order.order_id }}</p>
+                        <p class="mb-1"><strong>Tracking Number:</strong> {{ order.tracking_number }}</p>
+                        <p class="mb-1"><strong>Order Date:</strong> {{ order.created_at.strftime('%B %d, %Y') }}</p>
+                        <p class="mb-0"><strong>Estimated Delivery:</strong> {{ order.estimated_delivery.strftime('%B %d, %Y') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Delivery Address</h6>
+                        <p class="mb-1">{{ order.full_name }}</p>
+                        <p class="mb-1">{{ order.address_line1 }}</p>
+                        {% if order.address_line2 %}
+                        <p class="mb-1">{{ order.address_line2 }}</p>
+                        {% endif %}
+                        <p class="mb-1">{{ order.city }}, {{ order.state }} - {{ order.postal_code }}</p>
+                        <p class="mb-0">{{ order.country }}</p>
+                    </div>
+                </div>
+
+                <!-- Order Status Timeline -->
+                <h5 class="mb-3">Delivery Status</h5>
+                <div class="timeline">
+                    {% set status_sequence = ['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'] %}
+                    {% for status in status_sequence %}
+                    <div class="timeline-item {% if order.current_status == status %}active{% endif %} 
+                                         {% if status_sequence.index(status) < status_sequence.index(order.current_status) %}completed{% endif %}">
+                        <div class="timeline-marker">
+                            <i class="fas {% if status_sequence.index(status) < status_sequence.index(order.current_status) %}fa-check{% else %}fa-circle{% endif %}"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">
+                                {% if status == 'confirmed' %}Order Confirmed
+                                {% elif status == 'processing' %}Processing
+                                {% elif status == 'shipped' %}Shipped
+                                {% elif status == 'out_for_delivery' %}Out for Delivery
+                                {% elif status == 'delivered' %}Delivered
+                                {% endif %}
+                            </h6>
+                            {% for track in tracking_history %}
+                                {% if track.status == status %}
+                                <p class="text-muted mb-1">{{ track.description }}</p>
+                                <small class="text-muted">{{ track.updated_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                                {% if track.location %}
+                                <br><small class="text-muted"><i class="fas fa-map-marker-alt"></i> {{ track.location }}</small>
+                                {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Order Items</h5>
+            </div>
+            <div class="card-body">
+                {% for item in order_items %}
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 {% if not loop.last %}border-bottom{% endif %}">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ item.image_url }}" alt="{{ item.title }}" 
+                             style="width: 60px; height: 80px; object-fit: cover;" class="me-3">
+                        <div>
+                            <h6 class="mb-1">{{ item.title }}</h6>
+                            <small class="text-muted">by {{ item.author }}</small>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="mb-1">Qty: {{ item.quantity }}</div>
+                        <strong>${{ "%.2f"|format(item.price) }}</strong>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <div class="d-flex justify-content-between border-top pt-3">
+                    <strong>Total Amount:</strong>
+                    <strong>${{ "%.2f"|format(order.amount) }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Current Status Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Current Status</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="display-4 text-primary mb-3">
+                    {% if order.current_status == 'confirmed' %}
+                    <i class="fas fa-clipboard-check"></i>
+                    {% elif order.current_status == 'processing' %}
+                    <i class="fas fa-cog"></i>
+                    {% elif order.current_status == 'shipped' %}
+                    <i class="fas fa-shipping-fast"></i>
+                    {% elif order.current_status == 'out_for_delivery' %}
+                    <i class="fas fa-truck"></i>
+                    {% elif order.current_status == 'delivered' %}
+                    <i class="fas fa-check-circle"></i>
+                    {% endif %}
+                </div>
+                <h4 class="text-capitalize {% if order.current_status == 'delivered' %}text-success{% endif %}">
+                    {{ order.current_status|replace('_', ' ')|title }}
+                </h4>
+                {% if order.status_description %}
+                <p class="text-muted">{{ order.status_description }}</p>
+                {% endif %}
+                {% if order.location %}
+                <p class="text-muted"><i class="fas fa-map-marker-alt"></i> {{ order.location }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Support Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Need Help?</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">If you have any questions about your order, please contact our customer support.</p>
+                <div class="d-grid gap-2">
+                    <a href="mailto:support@bookstore.com" class="btn btn-outline-primary">
+                        <i class="fas fa-envelope"></i> Email Support
+                    </a>
+                    <a href="tel:+18005551234" class="btn btn-outline-secondary">
+                        <i class="fas fa-phone"></i> Call Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.timeline-item.active .timeline-marker {
+    background: #007bff;
+}
+
+.timeline-item.completed .timeline-marker {
+    background: #28a745;
+}
+
+.timeline-content {
+    padding-left: 10px;
+}
+
+.timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: -21px;
+    top: 20px;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item.completed:not(:last-child)::after {
+    background: #28a745;
+}
+</style>
+{% endblock %}

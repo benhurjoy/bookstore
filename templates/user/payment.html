@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Payment - BookStore{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Complete Your Payment</h4>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-credit-card display-1 text-primary"></i>
+                </div>
+                
+                <h3>Order Total: ${{ "%.2f"|format(total_amount) }}</h3>
+                <p class="text-muted mb-4">Complete your payment to place the order</p>
+                
+                <!-- Razorpay Payment Button -->
+                <button id="rzp-button" class="btn btn-success btn-lg w-100 mb-3">
+                    <i class="fas fa-credit-card"></i> Pay with Razorpay
+                </button>
+                
+                <!-- Direct Checkout for Testing -->
+                <form method="POST" action="{{ url_for('direct_checkout') }}" class="d-inline w-100">
+                    <input type="hidden" name="address_id" value="{{ session.selected_address_id }}">
+                    <button type="submit" class="btn btn-warning btn-lg w-100" 
+                            onclick="return confirm('Place order without payment? (For testing only)')">
+                        <i class="fas fa-bolt"></i> Test Checkout (No Payment)
+                    </button>
+                </form>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('checkout') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Checkout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Razorpay Integration Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById('rzp-button').onclick = function(e) {
+    e.preventDefault();
+    
+    // Show loading state
+    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    this.disabled = true;
+    
+    fetch('/create_order', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            var options = {
+                "key": data.key,
+                "amount": data.amount,
+                "currency": "INR",
+                "name": data.name,
+                "description": data.description,
+                "order_id": data.razorpay_order_id,
+                "handler": function (response) {
+                    // Handle successful payment
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/payment_success';
+                    
+                    var paymentId = document.createElement('input');
+                    paymentId.type = 'hidden';
+                    paymentId.name = 'razorpay_payment_id';
+                    paymentId.value = response.razorpay_payment_id;
+                    form.appendChild(paymentId);
+                    
+                    var razorpayOrderId = document.createElement('input');
+                    razorpayOrderId.type = 'hidden';
+                    razorpayOrderId.name = 'razorpay_order_id';
+                    razorpayOrderId.value = response.razorpay_order_id;
+                    form.appendChild(razorpayOrderId);
+                    
+                    var signature = document.createElement('input');
+                    signature.type = 'hidden';
+                    signature.name = 'razorpay_signature';
+                    signature.value = response.razorpay_signature;
+                    form.appendChild(signature);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                },
+                "prefill": data.prefill,
+                "theme": data.theme,
+                "modal": {
+                    "ondismiss": function() {
+                        // Reset button if modal is closed
+                        document.getElementById('rzp-button').innerHTML = '<i class="fas fa-credit-card"></i> Pay with Razorpay';
+                        document.getElementById('rzp-button').disabled = false;
+                    }
+                }
+            };
+            
+            var rzp = new Razorpay(options);
+            rzp.open();
+        } else {
+            alert('Error creating order: ' + data.error);
+            // Reset button
+            document.getElementById('rzp-button').innerHTML = '<i class="fas fa-credit-card"></i> Pay with Razorpay';
+            document.getElementById('rzp-button').disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating order. Please try again.');
+        // Reset button
+        document.getElementById('rzp-button').innerHTML = '<i class="fas fa-credit-card"></i> Pay with Razorpay';
+        document.getElementById('rzp-button').disabled = false;
+    });
+};
+</script>
+{% endblock %}

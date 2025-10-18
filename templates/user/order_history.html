@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Order History - BookStore{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Order History</h1>
+    <a href="{{ url_for('user_books') }}" class="btn btn-outline-primary">Continue Shopping</a>
+</div>
+
+{% if orders %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Items</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td><strong>{{ order.order_id }}</strong></td>
+                        <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>₹{{ "%.2f"|format(order.amount) }}</td>
+                        <td>{{ order.item_count }} item(s)</td>
+                        <td>
+                            <span class="badge 
+                                {% if order.status == 'completed' %}bg-success
+                                {% elif order.status == 'pending' %}bg-warning
+                                {% elif order.status == 'failed' %}bg-danger
+                                {% else %}bg-secondary{% endif %}">
+                                {{ order.status|title }}
+                            </span>
+                        </td>
+                  <td>
+                    <a href="{{ url_for('track_order', order_id=order.order_id) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-shipping-fast"></i> Track
+                    </a>
+                 </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+    <div class="display-1 text-muted mb-3">
+        <i class="fas fa-history"></i>
+    </div>
+    <h3 class="text-muted">No orders yet</h3>
+    <p class="text-muted mb-4">Start shopping to see your order history here.</p>
+    <a href="{{ url_for('user_books') }}" class="btn btn-primary btn-lg">Start Shopping</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}My Addresses - BookStore{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>My Addresses</h1>
+    <a href="{{ url_for('add_address') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add New Address
+    </a>
+</div>
+
+{% if addresses %}
+<div class="row">
+    {% for address in addresses %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 {% if address.is_default %}border-primary{% endif %}">
+            <div class="card-body">
+                {% if address.is_default %}
+                <span class="badge bg-primary mb-2">Default Address</span>
+                {% endif %}
+                
+                <h5 class="card-title">{{ address.full_name }}</h5>
+                <p class="card-text">
+                    <strong>Phone:</strong> {{ address.phone }}<br>
+                    {{ address.address_line1 }}<br>
+                    {% if address.address_line2 %}{{ address.address_line2 }}<br>{% endif %}
+                    {{ address.city }}, {{ address.state }} - {{ address.postal_code }}<br>
+                    {{ address.country }}
+                </p>
+                
+                <div class="btn-group">
+                    <a href="{{ url_for('edit_address', address_id=address.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a href="{{ url_for('delete_address', address_id=address.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this address?')">Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <div class="display-1 text-muted mb-3">
+        <i class="fas fa-map-marker-alt"></i>
+    </div>
+    <h3 class="text-muted">No addresses yet</h3>
+    <p class="text-muted mb-4">Add your first delivery address to start shopping.</p>
+    <a href="{{ url_for('add_address') }}" class="btn btn-primary btn-lg">Add Your First Address</a>
+</div>
+{% endif %}
+{% endblock %}
